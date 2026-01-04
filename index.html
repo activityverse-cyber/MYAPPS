@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>مدون الإجابات الذكي</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#2c3e50">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #333;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.98);
+            padding: 25px 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 { margin-top: 0; color: #1e3c72; font-size: 1.8rem; flex-shrink: 0; }
+        
+        .screen { 
+            display: none; 
+            animation: fadeIn 0.3s ease-out; 
+            overflow-y: auto; 
+            flex-grow: 1;
+            padding-bottom: 10px;
+        }
+        .screen.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        button {
+            background: linear-gradient(135deg, #007bff, #0062cc);
+            color: white;
+            border: none;
+            padding: 14px 0;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 8px 0;
+            cursor: pointer;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,123,255,0.3);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        button:active { transform: scale(0.98); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        button:disabled { background: #cbd5e0; box-shadow: none; cursor: not-allowed; }
+
+        .btn-secondary { background: #6c757d; box-shadow: 0 4px 10px rgba(108,117,125,0.3); }
+        .btn-danger { background: #dc3545; box-shadow: 0 4px 10px rgba(220,53,69,0.3); margin-top: 20px; }
+        .btn-success { background: #28a745; box-shadow: 0 4px 10px rgba(40,167,69,0.3); }
+
+        .nav-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .nav-buttons button { width: 50%; }
+
+        .options label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 500;
+        }
+        .options label:active { background-color: #e2e6ea; }
+        .options input { transform: scale(1.4); margin-right: 10px; accent-color: #007bff; }
+        .options input:checked + span { color: #007bff; font-weight: bold; }
+        .options label:has(input:checked) { border-color: #007bff; background-color: #e7f1ff; }
+
+        #resultsList {
+            list-style: none;
+            padding: 0;
+            text-align: right;
+            margin: 15px 0;
+        }
+        #resultsList li {
+            background: #fff;
+            margin-bottom: 12px;
+            padding: 12px 15px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            transition: 0.2s;
+        }
+        #resultsList li:hover { transform: translateX(-3px); border-color: #007bff; }
+        #resultsList li.error-marked { background-color: #fff5f5; border-color: #ffc9c9; }
+        
+        .badge {
+            background: #e7f1ff; color: #0056b3; border: 1px solid #b3d7ff;
+            padding: 5px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold;
+            margin-left: 10px; white-space: nowrap; display: inline-block; min-width: 65px; text-align: center;
+        }
+        
+        .answer-text { font-size: 1.1em; font-weight: bold; color: #333; }
+        .error-marked .answer-text { text-decoration: line-through; color: #dc3545; opacity: 0.7; }
+
+        /* --- تنسيقات السجل --- */
+        .history-section {
+            margin-top: 25px;
+            border-top: 2px dashed #eee;
+            padding-top: 15px;
+            text-align: right;
+        }
+        .history-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-right: 4px solid #007bff;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95em;
+        }
+        .history-score { font-weight: bold; color: #28a745; direction: ltr; }
+        
+        .save-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #90caf9;
+        }
+        .save-box input {
+            width: 70%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .developer-credit {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+        .developer-credit span {
+            color: #1e3c72;
+            font-weight: bold;
+            background: #eef2f3;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .status-bar {
+            font-size: 0.9em; color: #666; margin-bottom: 15px;
+            display: flex; justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="startScreen" class="screen active">
+            <h1>سلسلتي</h1>
+            <p>سيتم حفظ تقدمك تلقائياً</p>
+            <button onclick="startApp(20)">اختبار 20 سؤال</button>
+            <button onclick="startApp(40)">اختبار 40 سؤال</button>
+            
+            <div id="resumeBtnContainer" style="display:none; margin-top: 15px;">
+                <button onclick="resumeApp()" class="btn-success">استكمال الاختبار السابق</button>
+                <button onclick="clearCurrentQuiz()" class="btn-danger" style="font-size: 0.9em; padding: 10px;">حذف المؤقت وبدء جديد</button>
+            </div>
+
+            <div class="history-section">
+                <h3 style="margin: 0 0 10px 0; color: #555;">سجل النتائج السابقة</h3>
+                <div id="historyListContainer" style="max-height: 200px; overflow-y: auto;">
+                    <p style="color:#999; text-align:center;">لا يوجد سجلات محفوظة</p>
+                </div>
+                <button onclick="clearHistory()" style="background:none; color:#dc3545; border:1px solid #dc3545; margin-top:10px; font-size:0.8em; padding:5px;">مسح السجل</button>
+            </div>
+
+            <div class="developer-credit">
+                Developed by <span>Brahim El</span>
+            </div>
+        </div>
+
+        <div id="questionScreen" class="screen">
+            <div class="status-bar">
+                <span id="qCount"></span>
+                <span style="cursor: pointer; color: #dc3545;" onclick="exitApp()">خروج ×</span>
+            </div>
+            
+            <h2 id="questionTitle" style="color: #1e3c72; margin-bottom: 20px;"></h2>
+
+            <div class="options">
+                <label><span>الخيار 1</span><input type="checkbox" name="q_option" value="1"></label>
+                <label><span>الخيار 2</span><input type="checkbox" name="q_option" value="2"></label>
+                <label><span>الخيار 3</span><input type="checkbox" name="q_option" value="3"></label>
+                <label><span>الخيار 4</span><input type="checkbox" name="q_option" value="4"></label>
+            </div>
+            
+            <div id="msg" style="color:#dc3545; height: 20px; font-weight:bold; margin: 5px 0;"></div>
+
+            <div class="nav-buttons">
+                <button onclick="prevQ()" id="btnPrev" class="btn-secondary">السابق</button>
+                <button onclick="nextQ()" id="btnNext">التالي</button>
+            </div>
+
+            <div style="margin-top: 25px; display: flex; gap: 5px; justify-content: center;">
+                <input type="number" id="jumpInput" placeholder="#" style="width: 60px; text-align: center; border-radius: 8px; border: 1px solid #ccc;">
+                <button onclick="jumpTo()" style="width: auto; padding: 5px 15px; margin: 0; font-size: 14px; background: #6c757d;">اذهب</button>
+            </div>
+        </div>
+
+        <div id="resultsScreen" class="screen">
+            <h2 style="color: #28a745;">النتائج النهائية</h2>
+            
+            <div class="save-box">
+                <label style="display:block; margin-bottom:5px; color:#0d47a1; font-weight:bold;">حفظ النتيجة في السجل</label>
+                <input type="number" id="seriesInput" placeholder="ادخل رقم السلسلة (مثلاً 33)">
+                <button onclick="saveToHistory()" class="btn-success" style="margin:0;">حفظ / تحديث النتيجة</button>
+            </div>
+
+            <div style="background: #f1f8e9; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                <div id="scoreText" style="font-size: 1.5em; font-weight: bold; color: #2e7d32;">0 / 0</div>
+                <small>اضغط على أي سؤال لتحديد خطأ</small>
+            </div>
+            
+            <ul id="resultsList"></ul>
+            
+            <button onclick="clearCurrentQuiz()" class="btn-danger">إنهاء والعودة للرئيسية</button>
+        </div>
+    </div>
+
+    <script>
+        let state = {
+            total: 20,
+            current: 0,
+            answers: [], 
+            errors: [], 
+            isActive: false
+        };
+
+        window.onload = function() {
+            const savedState = localStorage.getItem('quizAppState');
+            if (savedState) {
+                state = JSON.parse(savedState);
+                if (state.isActive) {
+                    document.getElementById('resumeBtnContainer').style.display = 'block';
+                }
+            }
+            renderHistory();
+        };
+
+        function saveData() {
+            localStorage.setItem('quizAppState', JSON.stringify(state));
+        }
+
+        function clearCurrentQuiz() {
+            localStorage.removeItem('quizAppState');
+            location.reload();
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function startApp(count) {
+            state.total = count;
+            state.current = 0;
+            state.answers = new Array(count).fill().map(() => []);
+            state.errors = new Array(count).fill(false);
+            state.isActive = true;
+            saveData();
+            loadQuestion();
+            showScreen('questionScreen');
+        }
+
+        function resumeApp() {
+            if (state.current >= state.total) { 
+                showResults();
+            } else {
+                loadQuestion();
+                showScreen('questionScreen');
+            }
+        }
+
+        function exitApp() {
+            saveData();
+            showScreen('startScreen');
+            document.getElementById('resumeBtnContainer').style.display = 'block';
+            renderHistory();
+        }
+
+        function loadQuestion() {
+            document.getElementById('qCount').innerText = `${state.current + 1} / ${state.total}`;
+            document.getElementById('questionTitle').innerText = `سؤال ${state.current + 1}`;
+            
+            const checkboxes = document.getElementsByName('q_option');
+            checkboxes.forEach(cb => cb.checked = false);
+            
+            if (state.answers[state.current] && state.answers[state.current].length > 0) {
+                checkboxes.forEach(cb => {
+                    if (state.answers[state.current].includes(parseInt(cb.value))) cb.checked = true;
+                });
+            }
+            
+            document.getElementById('btnPrev').disabled = (state.current === 0);
+            
+            const btnNext = document.getElementById('btnNext');
+            if (state.current === state.total - 1) {
+                btnNext.innerText = "إنهاء والنتائج";
+                btnNext.style.background = "#28a745";
+            } else {
+                btnNext.innerText = "التالي";
+                btnNext.style.background = "linear-gradient(135deg, #007bff, #0062cc)";
+            }
+            document.getElementById('msg').innerText = "";
+        }
+
+        function saveCurrentAnswer() {
+            const selected = [];
+            document.getElementsByName('q_option').forEach(cb => {
+                if (cb.checked) selected.push(parseInt(cb.value));
+            });
+            state.answers[state.current] = selected;
+            saveData(); 
+            return selected.length > 0;
+        }
+
+        function nextQ() {
+            if (!saveCurrentAnswer()) {
+                document.getElementById('msg').innerText = "يجب اختيار إجابة واحدة!";
+                return;
+            }
+            if (state.current < state.total - 1) {
+                state.current++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function prevQ() {
+            saveCurrentAnswer();
+            if (state.current > 0) {
+                state.current--;
+                loadQuestion();
+            }
+        }
+
+        function jumpTo() {
+            const val = parseInt(document.getElementById('jumpInput').value);
+            if (val >= 1 && val <= state.total) {
+                saveCurrentAnswer();
+                state.current = val - 1;
+                loadQuestion();
+                document.getElementById('jumpInput').value = "";
+            }
+        }
+
+        function showResults() {
+            saveData();
+            const list = document.getElementById('resultsList');
+            list.innerHTML = "";
+            
+            let correct = 0;
+            let answeredCount = 0;
+
+            state.answers.forEach((ans, idx) => {
+                if (ans.length > 0) {
+                    answeredCount++;
+                    const li = document.createElement('li');
+                    
+                    const infoDiv = document.createElement('div');
+                    infoDiv.innerHTML = `
+                        <span class="badge">سؤال ${idx + 1}</span> 
+                        <span class="answer-text">${ans.join(" و ")}</span>
+                    `;
+                    
+                    const checkDiv = document.createElement('div');
+                    checkDiv.innerText = state.errors[idx] ? "❌" : "✅";
+                    checkDiv.style.marginLeft = "10px";
+                    
+                    li.appendChild(infoDiv);
+                    li.appendChild(checkDiv);
+                    
+                    if (state.errors[idx]) {
+                        li.classList.add('error-marked');
+                    } else {
+                        correct++;
+                    }
+                    
+                    li.onclick = () => {
+                        state.errors[idx] = !state.errors[idx];
+                        saveData();
+                        showResults();
+                    };
+                    
+                    list.appendChild(li);
+                }
+            });
+            
+            document.getElementById('scoreText').innerText = `${correct} من ${answeredCount}`;
+            showScreen('resultsScreen');
+        }
+
+        // --- دوال السجل المحسنة --- //
+        
+        function saveToHistory() {
+            const seriesNum = document.getElementById('seriesInput').value.trim();
+            if (!seriesNum) {
+                alert("الرجاء كتابة رقم السلسلة أولاً!");
+                return;
+            }
+
+            let correct = 0;
+            let answeredCount = 0;
+            state.answers.forEach((ans, idx) => {
+                if (ans.length > 0) {
+                    answeredCount++;
+                    if (!state.errors[idx]) correct++;
+                }
+            });
+
+            // تعديل: استخدام التنسيق البريطاني لضمان ظهور الأرقام (0-9)
+            const resultEntry = {
+                id: Date.now(), 
+                series: seriesNum,
+                score: correct,
+                total: answeredCount,
+                date: new Date().toLocaleDateString('en-GB') // يظهر التاريخ 25/12/2025
+            };
+
+            let history = JSON.parse(localStorage.getItem('quizAppHistory') || "[]");
+            
+            const existingIndex = history.findIndex(item => item.series === seriesNum);
+            let msg = "تم حفظ النتيجة في السجل بنجاح!";
+            
+            if (existingIndex !== -1) {
+                history.splice(existingIndex, 1);
+                msg = `تم تحديث نتيجة السلسلة رقم ${seriesNum} بنجاح!`;
+            }
+
+            history.unshift(resultEntry); 
+            localStorage.setItem('quizAppHistory', JSON.stringify(history));
+
+            alert(msg);
+            clearCurrentQuiz();
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('historyListContainer');
+            const history = JSON.parse(localStorage.getItem('quizAppHistory') || "[]");
+
+            if (history.length === 0) {
+                container.innerHTML = '<p style="color:#999; text-align:center; padding:10px;">لا يوجد سجلات محفوظة بعد</p>';
+                return;
+            }
+
+            let html = '';
+            history.forEach(item => {
+                html += `
+                <div class="history-item">
+                    <div>
+                        <span style="font-weight:bold; color:#333;">سلسلة رقم ${item.series}</span>
+                        <div style="font-size:0.8em; color:#777; direction:ltr; text-align:right;">${item.date}</div>
+                    </div>
+                    <div class="history-score">${item.score} / ${item.total}</div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function clearHistory() {
+            if(confirm("هل أنت متأكد من حذف جميع السجلات المحفوظة؟")) {
+                localStorage.removeItem('quizAppHistory');
+                renderHistory();
+            }
+        }
+    </script>
+</body>
+</html>
