@@ -1,3 +1,8 @@
-self.addEventListener('fetch', function(event) {
-  // هذا الكود فارغ حالياً، لكن وجود الملف ضروري ليتم قبول التطبيق
+// هذا الملف ضروري لتحويل الموقع لتطبيق
+self.addEventListener('install', (e) => {
+  console.log('[Service Worker] Install');
+});
+
+self.addEventListener('fetch', (e) => {
+  // مطلوب لكي يعمل التطبيق
 });
